@@ -1,6 +1,8 @@
 # Parsing notes
 
-Uses `CVEngineServer::ParseFile` to parse tokens.
+## Lexing
+
+Uses `CVEngineServer::ParseFile` to lex tokens.
 
 ### CVEngineServer::ParseFile
 
