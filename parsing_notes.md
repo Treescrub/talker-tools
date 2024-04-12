@@ -1,10 +1,10 @@
 # Parsing notes
 
-Uses CVEngineServer::ParseFile to parse tokens.
+Uses `CVEngineServer::ParseFile` to parse tokens.
 
 ### CVEngineServer::ParseFile
 
-Wrapper for COM_ParseFile, which is a wrapper for COM_Parse.
+Wrapper for `COM_ParseFile`, which is a wrapper for `COM_Parse`.
 
 ### COM_Parse
 
