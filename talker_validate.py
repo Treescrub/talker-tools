@@ -17,6 +17,8 @@ class Parser:
 
 class Lexer:
     tokens = None
+    line = 0
+    column = 0
     
     def __init__(self):
         self.tokens = []
@@ -28,18 +30,20 @@ class Lexer:
         while self.data_index < len(self.data):
             self.skip_nonprintable()
             
+            if self.current_char() is None:
+                break
+            
             if self.current_char() == '"':
                 self.read_quoted()
                 continue
             
             if self.current_char() in "{}()'":
-                self.add_token(self.current_char())
+                self.add_token(self.current_char(), (self.current_pos(), (self.line, self.column + 1)))
                 self.next_char()
                 continue
             
             self.read_token()
         
-    
     def skip_nonprintable(self):
         while self.data_index < len(self.data):
             if ord(self.current_char()) <= 32:
@@ -61,6 +65,8 @@ class Lexer:
                 self.next_char()
     
     def read_quoted(self):
+        start_pos = self.current_pos()
+    
         self.next_char()
         
         start_index = self.data_index
@@ -74,9 +80,11 @@ class Lexer:
             
             self.next_char()
         
-        self.add_token(self.data[start_index:end_index])
+        self.add_token(self.data[start_index:end_index], (start_pos, self.current_pos()))
     
     def read_token(self):
+        start_pos = self.current_pos()
+    
         start_index = self.data_index
         end_index = len(self.data)
         
@@ -87,10 +95,13 @@ class Lexer:
             
             self.next_char()
         
-        self.add_token(self.data[start_index:end_index])
+        self.add_token(self.data[start_index:end_index], (start_pos, self.current_pos()))
     
-    def add_token(self, value):
-        self.tokens.append(value)
+    def add_token(self, value, range):
+        self.tokens.append({"value": value, "range": range})
+    
+    def current_pos(self):
+        return (self.line, self.column)
     
     def current_char(self):
         if self.data_index >= len(self.data):
@@ -100,6 +111,12 @@ class Lexer:
     
     def next_char(self):
         self.data_index += 1
+        
+        self.column += 1
+        
+        if self.current_char() == '\n':
+            self.line += 1
+            self.column = -1
     
         return self.current_char()
     
@@ -115,7 +132,7 @@ def main():
 
     lexer = Lexer()
     lexer.lex(file_contents)
-    
+
     parser = Parser(lexer.tokens)
     
     parser.parse()
