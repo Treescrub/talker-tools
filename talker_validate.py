@@ -1,4 +1,5 @@
 import sys
+import codecs
 
 
 class Parser:
@@ -128,7 +129,22 @@ class Lexer:
 
 
 def main():
+    if len(sys.argv) < 2:
+        print("no file path")
+        return
+    
+    if len(sys.argv) > 2:
+        print("ignoring arguments")
+    
+    file_path = sys.argv[1]
     file_contents = ""
+    
+    try:
+        with codecs.open(file_path, encoding="ascii") as file:
+            file_contents = file.read()
+    except UnicodeDecodeError as error:
+        print(f"non-ascii character in file at indices {error.start}-{error.end}, stopping")
+        return
 
     lexer = Lexer()
     lexer.lex(file_contents)
