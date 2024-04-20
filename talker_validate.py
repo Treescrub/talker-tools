@@ -4,16 +4,66 @@ import codecs
 
 class Parser:
     tokens = None
-    current_token = 0
+    token_index = 0
     
     def __init__(self, tokens):
         self.tokens = tokens
 
     def parse(self):
+        while self.has_tokens():
+            lower_token = self.current_token()["value"].lower()
+            
+            if lower_token == "#include":
+                self.parse_include()
+            elif lower_token == "response":
+                self.parse_response()
+            elif lower_token == "criterion" or lower_token == "criteria":
+                self.parse_criterion()
+            elif lower_token == "rule":
+                self.parse_rule()
+            elif lower_token == "enumeration":
+                self.parse_enumeration()
+            else:
+                print(f"unknown token: '{lower_token}'")
+            
+            self.next_token()
+        
+        print("finished parsing!")
+    
+    def parse_include(self):
+        pass
+    
+    def parse_response(self):
+        pass
+    
+    def parse_single_response(self):
+        pass
+    
+    def parse_criterion(self):
+        pass
+    
+    def parse_single_criterion(self):
+        pass
+    
+    def parse_enumeration(self):
         pass
     
     def parse_rule(self):
         pass
+    
+    def has_tokens(self):
+        return self.token_index < len(self.tokens)
+    
+    def next_token(self):
+        self.token_index += 1
+        
+        return self.current_token()
+    
+    def current_token(self):
+        if not self.has_tokens():
+            return None
+        
+        return self.tokens[self.token_index]
 
 
 class Lexer:
