@@ -6,8 +6,14 @@ class Parser:
     tokens = None
     token_index = 0
     
+    issues = None
+    
+    included_files = None
+    
     def __init__(self, tokens):
         self.tokens = tokens
+        self.included_files = set()
+        self.issues = []
 
     def parse(self):
         while self.has_tokens():
@@ -31,7 +37,11 @@ class Parser:
         print("finished parsing!")
     
     def parse_include(self):
-        pass
+        if not self.peek_next_token():
+            self.add_issue_at_current("expected script name to include, but reached end of file")
+            return
+        
+        self.included_files.add(self.next_token()["value"])
     
     def parse_response(self):
         pass
@@ -59,11 +69,20 @@ class Parser:
         
         return self.current_token()
     
+    def peek_next_token(self):
+        if self.token_index >= len(self.tokens) - 1:
+            return None
+        
+        return self.tokens[self.token_index + 1]
+    
     def current_token(self):
         if not self.has_tokens():
             return None
         
         return self.tokens[self.token_index]
+
+    def add_issue_at_current(self, description):
+        self.issues.append((self.current_token()["range"], description))
 
 
 class Lexer:
@@ -202,6 +221,23 @@ def main():
     parser = Parser(lexer.tokens)
     
     parser.parse()
+    
+    print()
+    if len(parser.included_files):
+        print(f"Included scripts: {', '.join(parser.included_files)}")
+    else:
+        print("No included scripts")
+    
+    print()
+    if len(parser.issues):
+        print("Issues:")
+        for (range, description) in parser.issues:
+            (start_pos, end_pos) = range
+            (start_line, start_column) = start_pos
+            
+            print(f"line {start_line + 1}, column {start_column + 1}: {description}")
+    else:
+        print("No issues")
     
     
 if __name__ == "__main__":
