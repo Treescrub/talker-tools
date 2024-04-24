@@ -9,11 +9,14 @@ class Parser:
     issues = None
     
     included_files = None
+    enumerations = None
     
     def __init__(self, tokens):
         self.tokens = tokens
-        self.included_files = set()
         self.issues = []
+        
+        self.included_files = set()
+        self.enumerations = {}
 
     def parse(self):
         while self.has_tokens():
@@ -41,7 +44,9 @@ class Parser:
             self.add_issue_at_current("expected script name to include, but reached end of file")
             return
         
-        self.included_files.add(self.next_token()["value"])
+        self.next_token()
+        
+        self.included_files.add(self.current_token_value())
     
     def parse_response(self):
         pass
@@ -56,10 +61,57 @@ class Parser:
         pass
     
     def parse_enumeration(self):
-        pass
+        if self.at_final_token():
+            self.add_issue_at_current("expected enumeration name, but reached end of file")
+            return
+        
+        self.next_token()
+        name = self.current_token_value()
+        
+        if self.at_final_token():
+            self.add_issue_at_current("expected enumeration body, but reached end of file")
+            return
+        
+        self.next_token()
+        if self.current_token_value() != '{':
+            self.add_issue_at_current(f"expected opening bracket '{{' for enumeration body, got '{self.current_token_value()}' instead")
+            return
+        
+        keys = {}
+        
+        self.next_token()
+        while self.has_tokens():
+            if self.current_token_value() == '}':
+                break
+            
+            key = self.current_token_value()
+            
+            if self.at_final_token():
+                self.add_issue_at_current("expected value for key, but reached end of file")
+                return
+            
+            self.next_token()
+            value = self.current_token_value()
+            
+            keys[key] = value
+            
+            if self.at_final_token():
+                self.add_issue_at_current("expected more enumerations, but reached end of file")
+                return
+            
+            self.next_token()
+        
+        if not self.has_tokens():
+            self.add_issue_at_current(f"expected ending bracket '}}' for enumeration body, but reached end of file")
+            return
+        
+        self.enumerations[name] = keys
     
     def parse_rule(self):
         pass
+    
+    def at_final_token(self):
+        return self.token_index == len(self.tokens) - 1
     
     def has_tokens(self):
         return self.token_index < len(self.tokens)
@@ -69,11 +121,22 @@ class Parser:
         
         return self.current_token()
     
+    def previous_token(self):
+        if self.token_index <= 0:
+            return None
+        
+        self.token_index -= 1
+        
+        return self.current_token()
+    
     def peek_next_token(self):
         if self.token_index >= len(self.tokens) - 1:
             return None
         
         return self.tokens[self.token_index + 1]
+    
+    def current_token_value(self):
+        return self.current_token()["value"]
     
     def current_token(self):
         if not self.has_tokens():
@@ -223,10 +286,14 @@ def main():
     parser.parse()
     
     print()
+    print(f"{len(parser.included_files)} included scripts")
     if len(parser.included_files):
         print(f"Included scripts: {', '.join(parser.included_files)}")
-    else:
-        print("No included scripts")
+    
+    print()
+    print(f"{len(parser.enumerations)} enumerations")
+    if len(parser.enumerations):
+        print(f"Enumeration names: {', '.join(parser.enumerations.keys())}")
     
     print()
     if len(parser.issues):
