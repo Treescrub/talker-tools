@@ -285,16 +285,27 @@ def main():
     
     parser.parse()
     
+    print_includes(parser)
+    print_enums(parser)
+    
+    print_issues(parser)
+
+
+def print_includes(parser):
     print()
     print(f"{len(parser.included_files)} included scripts")
     if len(parser.included_files):
         print(f"Included scripts: {', '.join(parser.included_files)}")
-    
+
+
+def print_enums(parser):
     print()
     print(f"{len(parser.enumerations)} enumerations")
     if len(parser.enumerations):
         print(f"Enumeration names: {', '.join(parser.enumerations.keys())}")
-    
+
+
+def print_issues(parser):
     print()
     if len(parser.issues):
         print("Issues:")
@@ -305,7 +316,7 @@ def main():
             print(f"line {start_line + 1}, column {start_column + 1}: {description}")
     else:
         print("No issues")
-    
+
     
 if __name__ == "__main__":
     main()
