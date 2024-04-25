@@ -130,6 +130,59 @@ class Parser:
                 continue
             if lower_token == "displaylast":
                 continue
+            if lower_token == "fire":
+                if self.at_final_token():
+                    self.add_issue_at_current("expected targetname for 'fire', but reached end of file")
+                    return
+                
+                self.next_token()
+                target = self.current_token_value()
+                
+                if self.at_final_token():
+                    self.add_issue_at_current("expected input name for 'fire', but reached end of file")
+                    return
+                
+                self.next_token()
+                input = self.current_token_value()
+                
+                if self.at_final_token():
+                    self.add_issue_at_current("expected delay for 'fire', but reached end of file")
+                    return
+                
+                self.next_token()
+                delay = self.current_token_value()
+                
+                continue
+            if lower_token == "then":
+                if self.at_final_token():
+                    self.add_issue_at_current("expected target for 'then', but reached end of file")
+                    return
+                
+                self.next_token()
+                target = self.current_token_value()
+                
+                if self.at_final_token():
+                    self.add_issue_at_current("expected concept name for 'then', but reached end of file")
+                    return
+                
+                self.next_token()
+                concept = self.current_token_value()
+                
+                if self.at_final_token():
+                    self.add_issue_at_current("expected contexts for 'then', but reached end of file")
+                    return
+                
+                # TODO: concatenate tokens for stupidity
+                while self.has_tokens_on_same_line():
+                    self.next_token()
+                
+                if self.at_final_token():
+                    self.add_issue_at_current("expected delay for 'then', but reached end of file")
+                    return
+                
+                delay = self.current_token_value()
+                
+                continue
             
             self.add_issue_at_current(f"unknown response command '{self.current_token_value()}'")
     
