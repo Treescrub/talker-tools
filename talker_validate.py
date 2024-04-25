@@ -2,6 +2,9 @@ import sys
 import codecs
 
 
+RESPONSE_TYPES = {"scene", "sentence", "speak", "response", "print"}
+
+
 class Parser:
     tokens = None
     token_index = 0
@@ -52,7 +55,95 @@ class Parser:
         pass
     
     def parse_single_response(self):
-        pass
+        if self.current_token_value().lower() not in RESPONSE_TYPES:
+            self.add_issue_at_current(f"expected valid response type, got '{self.current_token_value()}' instead")
+            return
+        
+        response_type = self.current_token_value().lower()
+        
+        self.next_token()
+        response_value = self.current_token_value()
+        
+        while self.has_tokens_on_same_line():
+            self.next_token()
+            
+            lower_token = self.current_token_value().lower()
+            
+            if lower_token == "weight":
+                if self.at_final_token():
+                    self.add_issue_at_current("expected weight value, but reached end of file")
+                    return
+                
+                # TODO: parse weight
+                self.next_token()
+                continue
+            if lower_token == "predelay":
+                if self.at_final_token():
+                    self.add_issue_at_current("expected predelay value, but reached end of file")
+                    return
+                
+                # TODO: parse interval
+                self.next_token()
+                continue
+            if lower_token == "nodelay":
+                # BUG!!!!! In the actual parser it skips a token!
+                self.add_issue_at_current("nodelay has a bug that will cause weird behavior, do not use it!")
+                continue
+            if lower_token == "defaultdelay":
+                continue
+            if lower_token == "delay":
+                if self.at_final_token():
+                    self.add_issue_at_current("expected delay value, but reached end of file")
+                    return
+            
+                # TODO: parse interval
+                self.next_token()
+                continue
+            if lower_token == "speakonce":
+                continue
+            if lower_token == "noscene":
+                continue
+            if lower_token == "stop_on_nonidle":
+                continue
+            if lower_token == "odds":
+                if self.at_final_token():
+                    self.add_issue_at_current("expected odds value, but reached end of file")
+                    return
+            
+                # TODO: parse odds
+                self.next_token()
+                continue
+            if lower_token == "respeakdelay":
+                if self.at_final_token():
+                    self.add_issue_at_current("expected respeakdelay value, but reached end of file")
+                    return
+                    
+                # TODO: parse interval
+                self.next_token()
+                continue
+            if lower_token == "weapondelay":
+                if self.at_final_token():
+                    self.add_issue_at_current("expected weapondelay value, but reached end of file")
+                    return
+                    
+                # TODO: parse interval
+                self.next_token()
+                continue
+            if lower_token == "soundlevel":
+                if self.at_final_token():
+                    self.add_issue_at_current("expected soundlevel value, but reached end of file")
+                    return
+                
+                # TODO: parse sound level
+                self.next_token()
+                continue
+            if lower_token == "displayfirst":
+                continue
+            if lower_token == "displaylast":
+                continue
+            
+            self.add_issue_at_current(f"unknown response command '{self.current_token_value()}'")
+            
     
     def parse_criterion(self):
         pass
@@ -112,6 +203,17 @@ class Parser:
     
     def at_final_token(self):
         return self.token_index == len(self.tokens) - 1
+    
+    def has_tokens_on_same_line(self):
+        if not self.has_tokens() or self.at_final_token():
+            return False
+        
+        # tokens cannot span multiple lines, so check current token start and next token start
+        ((current_line, _), (_, _)) = self.current_token()["range"]
+        ((next_line, _), (_, _)) = self.peek_next_token()["range"]
+        
+        return current_line == next_line
+        
     
     def has_tokens(self):
         return self.token_index < len(self.tokens)
