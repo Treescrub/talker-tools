@@ -619,22 +619,16 @@ def main():
 def print_includes(parser):
     print()
     print(f"{len(parser.included_files)} included scripts")
-    if len(parser.included_files):
-        print(f"Included scripts: {', '.join(parser.included_files)}")
 
 
 def print_enums(parser):
     print()
     print(f"{len(parser.enumerations)} enumerations")
-    if len(parser.enumerations):
-        print(f"Enumeration names: {', '.join(parser.enumerations.keys())}")
 
 
 def print_response_groups(parser):
     print()
     print(f"{len(parser.response_groups)} response groups")
-    if len(parser.response_groups):
-        print(f"Response group names: {', '.join(parser.response_groups.keys())}")
 
 
 def print_criteria(parser):
