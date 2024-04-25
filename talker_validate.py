@@ -308,7 +308,65 @@ class Parser:
         self.enumerations[name] = keys
     
     def parse_rule(self):
-        pass
+        if self.at_final_token():
+            self.add_issue_at_current("expected rule name, but reached end of file")
+            return
+        
+        self.next_token()
+        
+        rule_name = self.current_token_value()
+        
+        if self.at_final_token():
+            self.add_issue_at_current("expected opening bracket '{' for rule body, but reached end of file")
+            return
+            
+        self.next_token()
+        
+        if self.current_token_value() != '{':
+            self.add_issue_at_current(f"expected opening bracket '{{' for rule body, got '{self.current_token_value()}' instead")
+            return
+        
+        while self.has_tokens():
+            if self.at_final_token():
+                self.add_issue_at_current("expected rule content, but reached end of file")
+                return
+        
+            self.next_token()
+        
+            lower_token = self.current_token_value().lower()
+            
+            if lower_token == '}':
+                break
+            
+            if lower_token == "matchonce":
+                continue
+            if lower_token == "applycontexttoworld":
+                continue
+            if lower_token == "applycontext":
+                if self.at_final_token():
+                    self.add_issue_at_current("expected context value, but reached end of file")
+                    return
+                    
+                # TODO: handle context storing
+                self.next_token()
+                continue
+            if lower_token == "response":
+                while self.has_tokens_on_same_line():
+                    self.next_token()
+                    
+                    # TODO: store response data
+                continue
+            if lower_token == "criteria" or lower_token == "criterion":
+                while self.has_tokens_on_same_line():
+                    self.next_token()
+                    
+                    # TODO: store criteria data
+                continue
+            
+            # inline criteria
+            self.previous_token()
+            
+            self.parse_single_criterion()
     
     def at_final_token(self):
         return self.token_index == len(self.tokens) - 1
