@@ -3,6 +3,7 @@ import codecs
 
 
 RESPONSE_TYPES = {"scene", "sentence", "speak", "response", "print"}
+ROOT_COMMANDS = {"#include", "response", "enumeration", "criteria", "criterion", "rule"}
 
 
 class Parser:
@@ -13,6 +14,7 @@ class Parser:
     
     included_files = None
     enumerations = None
+    response_groups = None
     
     def __init__(self, tokens):
         self.tokens = tokens
@@ -20,6 +22,7 @@ class Parser:
         
         self.included_files = set()
         self.enumerations = {}
+        self.response_groups = {}
 
     def parse(self):
         while self.has_tokens():
@@ -52,7 +55,49 @@ class Parser:
         self.included_files.add(self.current_token_value())
     
     def parse_response(self):
-        pass
+        if self.at_final_token():
+            self.add_issue_at_current("expected response group name, but reached end of file")
+            return
+        
+        self.next_token()
+        group_name = self.current_token_value()
+        
+        while not self.at_final_token():
+            self.next_token()
+            lower_token = self.current_token_value().lower()
+            
+            if lower_token in ROOT_COMMANDS:
+                self.previous_token()
+                break
+                
+            if lower_token == '{':
+                while self.has_tokens():
+                    if self.at_final_token():
+                        self.add_issue_at_current("expected response or command in response group body, but reached end of file")
+                        return
+                        
+                    self.next_token()
+                    lower_token = self.current_token_value().lower()
+                    
+                    if lower_token == '}':
+                        break
+                    if lower_token == "permitrepeats":
+                        continue
+                    if lower_token == "sequential":
+                        continue
+                    if lower_token == "norepeat":
+                        continue
+                    
+                    self.parse_single_response()
+                    
+                break
+            
+            if self.parse_response_options():
+                continue
+            
+            self.parse_single_response()
+        
+        self.response_groups[group_name] = {}
     
     def parse_single_response(self):
         if self.current_token_value().lower() not in RESPONSE_TYPES:
@@ -69,6 +114,8 @@ class Parser:
             
             lower_token = self.current_token_value().lower()
             
+            if self.parse_response_options():
+                continue
             if lower_token == "weight":
                 if self.at_final_token():
                     self.add_issue_at_current("expected weight value, but reached end of file")
@@ -77,73 +124,78 @@ class Parser:
                 # TODO: parse weight
                 self.next_token()
                 continue
-            if lower_token == "predelay":
-                if self.at_final_token():
-                    self.add_issue_at_current("expected predelay value, but reached end of file")
-                    return
-                
-                # TODO: parse interval
-                self.next_token()
-                continue
-            if lower_token == "nodelay":
-                # BUG!!!!! In the actual parser it skips a token!
-                self.add_issue_at_current("nodelay has a bug that will cause weird behavior, do not use it!")
-                continue
-            if lower_token == "defaultdelay":
-                continue
-            if lower_token == "delay":
-                if self.at_final_token():
-                    self.add_issue_at_current("expected delay value, but reached end of file")
-                    return
-            
-                # TODO: parse interval
-                self.next_token()
-                continue
-            if lower_token == "speakonce":
-                continue
-            if lower_token == "noscene":
-                continue
-            if lower_token == "stop_on_nonidle":
-                continue
-            if lower_token == "odds":
-                if self.at_final_token():
-                    self.add_issue_at_current("expected odds value, but reached end of file")
-                    return
-            
-                # TODO: parse odds
-                self.next_token()
-                continue
-            if lower_token == "respeakdelay":
-                if self.at_final_token():
-                    self.add_issue_at_current("expected respeakdelay value, but reached end of file")
-                    return
-                    
-                # TODO: parse interval
-                self.next_token()
-                continue
-            if lower_token == "weapondelay":
-                if self.at_final_token():
-                    self.add_issue_at_current("expected weapondelay value, but reached end of file")
-                    return
-                    
-                # TODO: parse interval
-                self.next_token()
-                continue
-            if lower_token == "soundlevel":
-                if self.at_final_token():
-                    self.add_issue_at_current("expected soundlevel value, but reached end of file")
-                    return
-                
-                # TODO: parse sound level
-                self.next_token()
-                continue
             if lower_token == "displayfirst":
                 continue
             if lower_token == "displaylast":
                 continue
             
             self.add_issue_at_current(f"unknown response command '{self.current_token_value()}'")
+    
+    def parse_response_options(self):
+        lower_token = self.current_token_value().lower()
+    
+        if lower_token == "predelay":
+            if self.at_final_token():
+                self.add_issue_at_current("expected predelay value, but reached end of file")
+                return
             
+            # TODO: parse interval
+            self.next_token()
+            return True
+        if lower_token == "nodelay":
+            # BUG!!!!! In the actual parser it skips a token!
+            self.add_issue_at_current("nodelay has a bug that will cause weird behavior, do not use it!")
+            return True
+        if lower_token == "defaultdelay":
+            return True
+        if lower_token == "delay":
+            if self.at_final_token():
+                self.add_issue_at_current("expected delay value, but reached end of file")
+                return
+        
+            # TODO: parse interval
+            self.next_token()
+            return True
+        if lower_token == "speakonce":
+            return True
+        if lower_token == "noscene":
+            return True
+        if lower_token == "stop_on_nonidle":
+            return True
+        if lower_token == "odds":
+            if self.at_final_token():
+                self.add_issue_at_current("expected odds value, but reached end of file")
+                return
+        
+            # TODO: parse odds
+            self.next_token()
+            return True
+        if lower_token == "respeakdelay":
+            if self.at_final_token():
+                self.add_issue_at_current("expected respeakdelay value, but reached end of file")
+                return
+                
+            # TODO: parse interval
+            self.next_token()
+            return True
+        if lower_token == "weapondelay":
+            if self.at_final_token():
+                self.add_issue_at_current("expected weapondelay value, but reached end of file")
+                return
+                
+            # TODO: parse interval
+            self.next_token()
+            return True
+        if lower_token == "soundlevel":
+            if self.at_final_token():
+                self.add_issue_at_current("expected soundlevel value, but reached end of file")
+                return
+            
+            # TODO: parse sound level
+            self.next_token()
+            return True
+        
+        return False
     
     def parse_criterion(self):
         pass
@@ -389,6 +441,7 @@ def main():
     
     print_includes(parser)
     print_enums(parser)
+    print_response_groups(parser)
     
     print_issues(parser)
 
@@ -405,6 +458,13 @@ def print_enums(parser):
     print(f"{len(parser.enumerations)} enumerations")
     if len(parser.enumerations):
         print(f"Enumeration names: {', '.join(parser.enumerations.keys())}")
+
+
+def print_response_groups(parser):
+    print()
+    print(f"{len(parser.response_groups)} response groups")
+    if len(parser.response_groups):
+        print(f"Response group names: {', '.join(parser.response_groups.keys())}")
 
 
 def print_issues(parser):
