@@ -15,6 +15,7 @@ class Parser:
     included_files = None
     enumerations = None
     response_groups = None
+    criteria = None
     
     def __init__(self, tokens):
         self.tokens = tokens
@@ -23,6 +24,7 @@ class Parser:
         self.included_files = set()
         self.enumerations = {}
         self.response_groups = {}
+        self.criteria = {}
 
     def parse(self):
         while self.has_tokens():
@@ -198,10 +200,65 @@ class Parser:
         return False
     
     def parse_criterion(self):
-        pass
+        if self.at_final_token():
+            self.add_issue_at_current("expected criteria name, but reached end of file")
+            return
+            
+        self.next_token()
+        criterion_name = self.current_token_value()
+        
+        self.parse_single_criterion()
+        
+        self.criteria[criterion_name] = {}
     
     def parse_single_criterion(self):
-        pass
+        got_body = False
+    
+        while self.has_tokens_on_same_line() or not got_body:
+            self.next_token()
+            
+            lower_token = self.current_token_value().lower()
+            
+            if lower_token in ROOT_COMMANDS:
+                self.previous_token()
+                break
+            
+            if lower_token == '{':
+                got_body = True
+                
+                self.next_token()
+                while self.has_tokens():
+                    lower_token = self.current_token_value().lower()
+                    
+                    if lower_token == '}':
+                        break
+                    
+                    # TODO: parse subcriteria
+                    
+                    self.next_token()
+                    
+                continue
+            if lower_token == "required":
+                continue
+            if lower_token == "weight":
+                if self.at_final_token():
+                    self.add_issue_at_current("expected weight value, but reached end of file")
+                    return
+                
+                # TODO: parse weight
+                self.next_token()
+                continue
+            
+            match_key = self.current_token_value()
+            
+            self.next_token()
+            if self.at_final_token():
+                self.add_issue_at_current("expected match value, but reached end of file")
+                return
+            
+            match_value = self.current_token_value()
+            
+            got_body = True
     
     def parse_enumeration(self):
         if self.at_final_token():
@@ -442,6 +499,7 @@ def main():
     print_includes(parser)
     print_enums(parser)
     print_response_groups(parser)
+    print_criteria(parser)
     
     print_issues(parser)
 
@@ -466,6 +524,10 @@ def print_response_groups(parser):
     if len(parser.response_groups):
         print(f"Response group names: {', '.join(parser.response_groups.keys())}")
 
+
+def print_criteria(parser):
+    print()
+    print(f"{len(parser.criteria)} criteria")
 
 def print_issues(parser):
     print()
