@@ -594,10 +594,11 @@ def main():
     file_contents = ""
     
     try:
-        with codecs.open(file_path, encoding="ascii") as file:
+        with codecs.open(file_path, encoding="ascii", errors="replace") as file:
             file_contents = file.read()
     except UnicodeDecodeError as error:
-        print(f"non-ascii character in file at indices {error.start}-{error.end}, stopping")
+        print(f"file reading failed with, stopping: {error}")
+        
         return
 
     lexer = Lexer()
