@@ -644,6 +644,7 @@ def main():
     
     print_includes(parser)
     print_enums(parser)
+    print_rules(parser)
     print_response_groups(parser)
     print_criteria(parser)
     
@@ -658,6 +659,11 @@ def print_includes(parser):
 def print_enums(parser):
     print()
     print(f"{len(parser.enumerations)} enumerations")
+
+
+def print_rules(parser):
+    print()
+    print(f"{len(parser.rules)} rules")
 
 
 def print_response_groups(parser):
