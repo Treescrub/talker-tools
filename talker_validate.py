@@ -440,6 +440,14 @@ class Parser:
                     
                     # TODO: store criteria data
                 continue
+            if lower_token == "forceweight":
+                if self.at_final_token():
+                    self.add_issue_at_current("expected forceweight value, but reached end of file")
+                    return
+                
+                # TODO: store forceweight
+                self.next_token()
+                continue
             
             # inline criteria
             self.previous_token()
