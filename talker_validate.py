@@ -323,6 +323,8 @@ class Parser:
             got_body = True
     
     def parse_enumeration(self):
+        (start_pos, _) = self.current_token()["range"]
+    
         if self.at_final_token():
             self.add_issue_at_current("expected enumeration name, but reached end of file")
             return
@@ -366,6 +368,11 @@ class Parser:
         if not self.has_tokens():
             self.add_issue_at_current(f"expected ending bracket '}}' for enumeration body, but reached end of file")
             return
+        
+        (_, end_pos) = self.current_token()["range"]
+        
+        if name in self.enumerations:
+            self.add_issue_at_range((start_pos, end_pos), f"duplicate enumeration '{name}'")
         
         self.enumerations[name] = keys
     
