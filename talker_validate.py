@@ -631,7 +631,7 @@ def main():
         with codecs.open(file_path, encoding="ascii", errors="replace") as file:
             file_contents = file.read()
     except UnicodeDecodeError as error:
-        print(f"file reading failed with, stopping: {error}")
+        print(f"file reading failed, stopping: {error}")
         
         return
 
