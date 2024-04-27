@@ -262,6 +262,8 @@ class Parser:
         return False
     
     def parse_criterion(self):
+        (start_pos, _) = self.current_token()["range"]
+    
         if self.at_final_token():
             self.add_issue_at_current("expected criteria name, but reached end of file")
             return
@@ -270,6 +272,11 @@ class Parser:
         criterion_name = self.current_token_value()
         
         self.parse_single_criterion()
+        
+        (_, end_pos) = self.current_token()["range"]
+        
+        if criterion_name in self.criteria:
+            self.add_issue_at_range((start_pos, end_pos), f"duplicate criterion '{criterion_name}'")
         
         self.criteria[criterion_name] = {}
     
