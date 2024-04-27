@@ -57,6 +57,8 @@ class Parser:
         self.included_files.add(self.current_token_value())
     
     def parse_response(self):
+        (start_pos, _) = self.current_token()["range"]
+    
         if self.at_final_token():
             self.add_issue_at_current("expected response group name, but reached end of file")
             return
@@ -98,6 +100,11 @@ class Parser:
                 continue
             
             self.parse_single_response()
+        
+        (_, end_pos) = self.current_token()["range"]
+        
+        if group_name in self.response_groups:
+            self.add_issue_at_range((start_pos, end_pos), f"duplicate response group '{group_name}'")
         
         self.response_groups[group_name] = {}
     
@@ -468,6 +475,9 @@ class Parser:
 
     def add_issue_at_current(self, description):
         self.issues.append((self.current_token()["range"], description))
+    
+    def add_issue_at_range(self, range, description):
+        self.issues.append((range, description))
 
 
 class Lexer:
