@@ -16,6 +16,7 @@ class Parser:
     enumerations = None
     response_groups = None
     criteria = None
+    rules = None
     
     def __init__(self, tokens):
         self.tokens = tokens
@@ -25,6 +26,7 @@ class Parser:
         self.enumerations = {}
         self.response_groups = {}
         self.criteria = {}
+        self.rules = {}
 
     def parse(self):
         while self.has_tokens():
@@ -368,6 +370,8 @@ class Parser:
         self.enumerations[name] = keys
     
     def parse_rule(self):
+        (start_pos, _) = self.current_token()["range"]
+    
         if self.at_final_token():
             self.add_issue_at_current("expected rule name, but reached end of file")
             return
@@ -425,8 +429,14 @@ class Parser:
             
             # inline criteria
             self.previous_token()
-            
             self.parse_single_criterion()
+        
+        (_, end_pos) = self.current_token()["range"]
+        
+        if rule_name in self.rules:
+            self.add_issue_at_range((start_pos, end_pos), f"duplicate rule '{rule_name}'")
+        
+        self.rules[rule_name] = {}
     
     def at_final_token(self):
         return self.token_index == len(self.tokens) - 1
