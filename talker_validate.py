@@ -219,8 +219,8 @@ class Parser:
                 self.add_issue_at_current("expected delay value, but reached end of file")
                 return
         
-            # TODO: parse interval
             self.next_token()
+            self.parse_interval()
             return True
         if lower_token == "speakonce":
             return True
@@ -241,16 +241,16 @@ class Parser:
                 self.add_issue_at_current("expected respeakdelay value, but reached end of file")
                 return
                 
-            # TODO: parse interval
             self.next_token()
+            self.parse_interval()
             return True
         if lower_token == "weapondelay":
             if self.at_final_token():
                 self.add_issue_at_current("expected weapondelay value, but reached end of file")
                 return
                 
-            # TODO: parse interval
             self.next_token()
+            self.parse_interval()
             return True
         if lower_token == "soundlevel":
             if self.at_final_token():
