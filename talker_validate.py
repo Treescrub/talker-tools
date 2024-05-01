@@ -1,5 +1,6 @@
 import sys
 import codecs
+import math
 
 
 RESPONSE_TYPES = {"scene", "sentence", "speak", "response", "print"}
@@ -132,8 +133,17 @@ class Parser:
                     self.add_issue_at_current("expected weight value, but reached end of file")
                     return
                 
-                # TODO: parse weight
                 self.next_token()
+                try:
+                    weight = float(self.current_token_value())
+                    
+                    if math.isnan(weight):
+                        self.add_issue_at_current("weight value is NaN")
+                    elif math.isinf(weight):
+                        self.add_issue_at_current("weight value is infinite")
+                except:
+                    self.add_issue_at_current(f"invalid weight value '{self.current_token_value()}'")
+                
                 continue
             if lower_token == "displayfirst":
                 continue
