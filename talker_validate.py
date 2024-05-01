@@ -134,15 +134,7 @@ class Parser:
                     return
                 
                 self.next_token()
-                try:
-                    weight = float(self.current_token_value())
-                    
-                    if math.isnan(weight):
-                        self.add_issue_at_current("weight value is NaN")
-                    elif math.isinf(weight):
-                        self.add_issue_at_current("weight value is infinite")
-                except:
-                    self.add_issue_at_current(f"invalid weight value '{self.current_token_value()}'")
+                self.check_float()
                 
                 continue
             if lower_token == "displayfirst":
@@ -213,8 +205,8 @@ class Parser:
                 self.add_issue_at_current("expected predelay value, but reached end of file")
                 return
             
-            # TODO: parse interval
             self.next_token()
+            self.parse_interval()
             return True
         if lower_token == "nodelay":
             # BUG!!!!! In the actual parser it skips a token!
@@ -469,6 +461,34 @@ class Parser:
             self.add_issue_at_range((start_pos, end_pos), f"duplicate rule '{rule_name}'")
         
         self.rules[rule_name] = {}
+    
+    def parse_interval(self):
+        if ',' not in self.current_token_value():
+            self.check_float()
+            return
+        
+        if self.current_token_value().count(',') > 1:
+            self.add_issue_at_current("multiple commas in interval")
+            return
+        
+        start, end = self.current_token_value().split(',')
+        
+        self.check_float(start)
+        self.check_float(end)
+    
+    def check_float(self, float_str=None):
+        if float_str is None:
+            float_str = self.current_token_value()
+        
+        try:
+            value = float(float_str)
+            
+            if math.isnan(value):
+                self.add_issue_at_current("float value is NaN")
+            elif math.isinf(value):
+                self.add_issue_at_current("float value is infinite")
+        except:
+            self.add_issue_at_current(f"invalid float value '{float_str}'")
     
     def at_final_token(self):
         return self.token_index == len(self.tokens) - 1
