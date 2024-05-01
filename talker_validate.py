@@ -473,8 +473,12 @@ class Parser:
         
         start, end = self.current_token_value().split(',')
         
-        self.check_float(start)
-        self.check_float(end)
+        start_float = self.check_float(start)
+        end_float = self.check_float(end)
+        
+        if start_float is not None and end_float is not None:
+            if end_float < start_float:
+                self.add_issue_at_current("range in interval is negative")
     
     def check_float(self, float_str=None):
         if float_str is None:
@@ -487,8 +491,12 @@ class Parser:
                 self.add_issue_at_current("float value is NaN")
             elif math.isinf(value):
                 self.add_issue_at_current("float value is infinite")
+            else:
+                return value
         except:
             self.add_issue_at_current(f"invalid float value '{float_str}'")
+        
+        return None
     
     def at_final_token(self):
         return self.token_index == len(self.tokens) - 1
